@@ -1,0 +1,8 @@
+[submodule "public"]
+	path = public
+	url = https://github.com/mpilquist/mpilquist.github.io
+	branch = master
+[submodule "themes/nofancy"]
+	path = themes/nofancy
+	url = https://github.com/gizak/nofancy
+	branch = master
