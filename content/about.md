@@ -1,6 +1,5 @@
 +++
 title = "About"
-draft = true
 date = "2017-03-11"
 +++
 
