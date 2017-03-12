@@ -140,7 +140,7 @@ This definition is sufficient to restore stack safety to `Coyoneda` and `Free`! 
 
 ## Generalized Stack Safe Function Composition
 
-While `ListF1` provides a stack safe `compose`, it inherits the default `andThen` from `Function1`. This is very dangerous if we hope to provide a general purpose stack safe function wrapper. Extending `ListF1` to support both stack safe `compose` and `andThen` (and arbitrary interleavings) requires us to store the type aligned sequence in a data structure that has constant time cons and snoc operations. The only standard library collection that supports this is `Vector`.
+While `ListF1` provides a stack safe `compose`, it inherits the default `andThen` from `Function1`. This is very dangerous if we hope to provide a general purpose stack safe function wrapper. Extending `ListF1` to support both stack safe `compose` and `andThen` (and arbitrary interleavings) requires us to store the type aligned sequence in a data structure that has constant time cons and snoc operations. The only standard library collection that supports this is `Vector` (correction: [@nickstanch pointed out that `scala.collection.immutable.Queue` has O(1) cons and snoc and O(n) traversal](https://twitter.com/nickstanch/status/840886207064203264) -- benchmarks below have been updated to include a `Queue` based implementation).
 
 ```scala
 final class VectorF1[-A, +B] private (private val fs: Vector[(Any => Any)]) extends (A => B) {
@@ -204,65 +204,77 @@ class FunctionBenchmark {
   @Benchmark def unitary_ListF1 = ListF1(f)(0)
   @Benchmark def unitary_VectorF1 = VectorF1(f)(0)
   @Benchmark def unitary_CatenableF1 = CatenableF1(f)(0)
+  @Benchmark def unitary_QueueF1 = QueueF1(f)(0)
 
   @Benchmark def compose2_Function1 = (f compose f)(0)
   @Benchmark def compose2_ListF1 = (ListF1(f) compose f)(0)
   @Benchmark def compose2_VectorF1 = (VectorF1(f) compose f)(0)
   @Benchmark def compose2_CatenableF1 = (CatenableF1(f) compose f)(0)
+  @Benchmark def compose2_QueueF1 = (QueueF1(f) compose f)(0)
 
   @Benchmark def andThen2_Function1 = (f andThen f)(0)
   @Benchmark def andThen2_ListF1 = (ListF1(f) andThen f)(0)
   @Benchmark def andThen2_VectorF1 = (VectorF1(f) andThen f)(0)
   @Benchmark def andThen2_CatenableF1 = (CatenableF1(f) andThen f)(0)
+  @Benchmark def andThen2_QueueF1 = (QueueF1(f) andThen f)(0)
 
   @Benchmark def compose1k_Function1 = (0 until 1000).foldLeft(f)((acc, _) => acc compose f)(0)
   @Benchmark def compose1k_ListF1 = (0 until 1000).foldLeft(ListF1(f))((acc, _) => acc compose f)(0)
   @Benchmark def compose1k_VectorF1 = (0 until 1000).foldLeft(VectorF1(f))((acc, _) => acc compose f)(0)
   @Benchmark def compose1k_CatenableF1 = (0 until 1000).foldLeft(CatenableF1(f))((acc, _) => acc compose f)(0)
+  @Benchmark def compose1k_QueueF1 = (0 until 1000).foldLeft(QueueF1(f))((acc, _) => acc compose f)(0)
 
   @Benchmark def andThen1k_Function1 = (0 until 1000).foldLeft(f)((acc, _) => acc andThen f)(0)
   @Benchmark def andThen1k_ListF1 = (0 until 1000).foldLeft(ListF1(f): Int => Int)((acc, _) => acc andThen f)(0)
   @Benchmark def andThen1k_VectorF1 = (0 until 1000).foldLeft(VectorF1(f))((acc, _) => acc andThen f)(0)
   @Benchmark def andThen1k_CatenableF1 = (0 until 1000).foldLeft(CatenableF1(f))((acc, _) => acc andThen f)(0)
+  @Benchmark def andThen1k_QueueF1 = (0 until 1000).foldLeft(QueueF1(f))((acc, _) => acc andThen f)(0)
 
-  @Benchmark def interleaved5k_Function1 = (0 until 5000).foldLeft(f)((acc, i) => if (i % 2 == 0) acc compose f else acc andThen f)(0)
-  @Benchmark def interleaved5k_ListF1 = (0 until 5000).foldLeft(ListF1(f): Int => Int)((acc, i) => if (i % 2 == 0) acc compose f else acc andThen f)(0)
-  @Benchmark def interleaved5k_VectorF1 = (0 until 5000).foldLeft(VectorF1(f))((acc, i) => if (i % 2 == 0) acc compose f else acc andThen f)(0)
-  @Benchmark def interleaved5k_CatenableF1 = (0 until 5000).foldLeft(CatenableF1(f))((acc, i) => if (i % 2 == 0) acc compose f else acc andThen f)(0)
+  @Benchmark def interleaved1k_Function1 = (0 until 1000).foldLeft(f)((acc, i) => if (i % 2 == 0) acc compose f else acc andThen f)(0)
+  @Benchmark def interleaved1k_ListF1 = (0 until 1000).foldLeft(ListF1(f): Int => Int)((acc, i) => if (i % 2 == 0) acc compose f else acc andThen f)(0)
+  @Benchmark def interleaved1k_VectorF1 = (0 until 1000).foldLeft(VectorF1(f))((acc, i) => if (i % 2 == 0) acc compose f else acc andThen f)(0)
+  @Benchmark def interleaved1k_CatenableF1 = (0 until 1000).foldLeft(CatenableF1(f))((acc, i) => if (i % 2 == 0) acc compose f else acc andThen f)(0)
+  @Benchmark def interleaved1k_QueueF1 = (0 until 1000).foldLeft(QueueF1(f))((acc, i) => if (i % 2 == 0) acc compose f else acc andThen f)(0)
 }
 ```
 
-Running these tests via `jmh:run -i 10 -wi 5 -f1 -t4` results in:
+Running these tests via `jmh:run -i 20 -wi 10 -f1 -t2` results in:
 
 ```
-[info] Benchmark                                 Mode  Cnt          Score          Error  Units
-[info] FunctionBenchmark.andThen1k_CatenableF1      thrpt   10      52645.292 ±     1103.646  ops/s
-[info] FunctionBenchmark.andThen1k_Function1        thrpt   10     150172.986 ±    17942.467  ops/s
-[info] FunctionBenchmark.andThen1k_ListF1           thrpt   10     146660.259 ±    16294.933  ops/s
-[info] FunctionBenchmark.andThen1k_VectorF1         thrpt   10      44720.571 ±     5828.594  ops/s
-[info] FunctionBenchmark.andThen2_CatenableF1       thrpt   10   35588572.940 ±  3092474.118  ops/s
-[info] FunctionBenchmark.andThen2_Function1         thrpt   10  818744688.563 ± 19275569.749  ops/s
-[info] FunctionBenchmark.andThen2_ListF1            thrpt   10  171929071.672 ±  3233542.315  ops/s
-[info] FunctionBenchmark.andThen2_VectorF1          thrpt   10   14420360.573 ±   978766.979  ops/s
-[info] FunctionBenchmark.compose1k_CatenableF1      thrpt   10      74923.610 ±     2010.544  ops/s
-[info] FunctionBenchmark.compose1k_Function1        thrpt   10     212811.294 ±     2892.191  ops/s
-[info] FunctionBenchmark.compose1k_ListF1           thrpt   10      77221.242 ±     1649.900  ops/s
-[info] FunctionBenchmark.compose1k_VectorF1         thrpt   10      50692.537 ±      901.164  ops/s
-[info] FunctionBenchmark.compose2_CatenableF1       thrpt   10   38767734.133 ±   912509.779  ops/s
-[info] FunctionBenchmark.compose2_Function1         thrpt   10  814582136.712 ± 12637630.910  ops/s
-[info] FunctionBenchmark.compose2_ListF1            thrpt   10   97332398.974 ±  7628692.141  ops/s
-[info] FunctionBenchmark.compose2_VectorF1          thrpt   10   11022710.915 ±  2701253.720  ops/s
-[info] FunctionBenchmark.interleaved1k_CatenableF1  thrpt   10      48609.388 ±     1223.259  ops/s
-[info] FunctionBenchmark.interleaved1k_Function1    thrpt   10     136023.668 ±     9655.060  ops/s
-[info] FunctionBenchmark.interleaved1k_ListF1       thrpt   10     163702.682 ±     1764.030  ops/s
-[info] FunctionBenchmark.interleaved1k_VectorF1     thrpt   10      25646.788 ±     7765.635  ops/s
-[info] FunctionBenchmark.unitary_CatenableF1        thrpt   10   54484868.696 ± 17801651.822  ops/s
-[info] FunctionBenchmark.unitary_Function1          thrpt   10  760764365.837 ± 27670122.968  ops/s
-[info] FunctionBenchmark.unitary_ListF1             thrpt   10  160625316.286 ± 12419083.383  ops/s
-[info] FunctionBenchmark.unitary_VectorF1           thrpt   10   17808062.407 ±  2016163.644  ops/s
+[info] Benchmark                                     Mode  Cnt          Score          Error  Units
+[info] FunctionBenchmark.andThen1k_CatenableF1      thrpt   20      45571.159 ±     2335.498  ops/s
+[info] FunctionBenchmark.andThen1k_Function1        thrpt   20     126595.146 ±     9753.267  ops/s
+[info] FunctionBenchmark.andThen1k_ListF1           thrpt   20     122326.955 ±    10781.655  ops/s
+[info] FunctionBenchmark.andThen1k_QueueF1          thrpt   20      37697.152 ±     3168.007  ops/s
+[info] FunctionBenchmark.andThen1k_VectorF1         thrpt   20      45148.023 ±      442.307  ops/s
+[info] FunctionBenchmark.andThen2_CatenableF1       thrpt   20   32498316.581 ±   785428.217  ops/s
+[info] FunctionBenchmark.andThen2_Function1         thrpt   20  797337943.963 ± 21834869.821  ops/s
+[info] FunctionBenchmark.andThen2_ListF1            thrpt   20  155599638.602 ±  4425324.044  ops/s
+[info] FunctionBenchmark.andThen2_QueueF1           thrpt   20   14540756.592 ±   123320.145  ops/s
+[info] FunctionBenchmark.andThen2_VectorF1          thrpt   20   14688247.077 ±   131961.840  ops/s
+[info] FunctionBenchmark.compose1k_CatenableF1      thrpt   20      69420.052 ±     1235.404  ops/s
+[info] FunctionBenchmark.compose1k_Function1        thrpt   20     152949.881 ±     1692.388  ops/s
+[info] FunctionBenchmark.compose1k_ListF1           thrpt   20      71636.332 ±     1137.961  ops/s
+[info] FunctionBenchmark.compose1k_QueueF1          thrpt   20      51920.074 ±      428.416  ops/s
+[info] FunctionBenchmark.compose1k_VectorF1         thrpt   20      40058.457 ±     4437.660  ops/s
+[info] FunctionBenchmark.compose2_CatenableF1       thrpt   20   27988815.099 ±  2636173.720  ops/s
+[info] FunctionBenchmark.compose2_Function1         thrpt   20  789010032.967 ± 28815277.968  ops/s
+[info] FunctionBenchmark.compose2_ListF1            thrpt   20   95572290.279 ±  1972247.968  ops/s
+[info] FunctionBenchmark.compose2_QueueF1           thrpt   20   20448278.219 ±   224039.432  ops/s
+[info] FunctionBenchmark.compose2_VectorF1          thrpt   20   12204863.300 ±   155372.662  ops/s
+[info] FunctionBenchmark.interleaved1k_CatenableF1  thrpt   20      47635.076 ±      556.602  ops/s
+[info] FunctionBenchmark.interleaved1k_Function1    thrpt   20     129433.210 ±     1434.155  ops/s
+[info] FunctionBenchmark.interleaved1k_ListF1       thrpt   20     134112.681 ±     2443.776  ops/s
+[info] FunctionBenchmark.interleaved1k_QueueF1      thrpt   20      43697.844 ±     1693.528  ops/s
+[info] FunctionBenchmark.interleaved1k_VectorF1     thrpt   20      30688.994 ±      512.420  ops/s
+[info] FunctionBenchmark.unitary_CatenableF1        thrpt   20   48579687.093 ±  1281930.212  ops/s
+[info] FunctionBenchmark.unitary_Function1          thrpt   20  809718632.059 ±  6557132.444  ops/s
+[info] FunctionBenchmark.unitary_ListF1             thrpt   20  172189813.428 ±  3269454.794  ops/s
+[info] FunctionBenchmark.unitary_QueueF1            thrpt   20   22289854.985 ±   500526.148  ops/s
+[info] FunctionBenchmark.unitary_VectorF1           thrpt   20   18913195.601 ±   502848.724  ops/s
 ```
 
-Based on these tests, `CatenableF1` is about 3x faster than `VectorF1` for small compositions and about 1.5x - 2x `VectorF1` for large collections. `CatenableF1` is about 3x slower than `ListF1` and about 14x slower than `Function1` for small compositions and about equal to `ListF1` and 3x slower than `Function1` for large compositions.
+Based on these tests, `CatenableF1` is about 3x faster than `VectorF1` for small compositions and about 1.5x - 2x `VectorF1` for large collections. `CatenableF1` is about 3x slower than `ListF1` and about 14x slower than `Function1` for small compositions and about equal to `ListF1` and 3x slower than `Function1` for large compositions. `CatenableF1` beats `QueueF1` which beats `VectorF1`.
 
 Not bad but stack safety comes at a runtime performance cost. One area for investigation is a dynamic algorithm that switches from `Function1` to `CatenableF1` when the composition stack reaches a certain depth.
 
