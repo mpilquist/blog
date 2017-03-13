@@ -163,7 +163,7 @@ object VectorF1 {
 }
 ```
 
-`VectorF1` seems perfect. It has stack safe `compose` and `andThen`. Unfortunately, it is terribly slow. Most composed functions are going to be made up of a small number of compositions -- 2, 3, or 4 functions. It's uncommon to compose 1,000,000 functions. `Vector` has effectively constant time cons and snoc, but there are large constant factors. For example, a single element vector will allocate an 32-element array internally. These constant factors end up dominating the performance results, so this solution won't work.
+`VectorF1` seems perfect. It has stack safe `compose` and `andThen`. Unfortunately, it is terribly slow. Most composed functions are going to be made up of a small number of compositions -- 2, 3, or 4 functions. It's uncommon to compose 1,000,000 functions. `Vector` has effectively constant time cons and snoc, but there are large constant factors. For example, a single element vector will allocate a 32-element array internally. These constant factors end up dominating the performance results, so this solution won't work.
 
 Fortunately, FS2 has a data structure that performs better -- [`fs2.util.Catenable`](https://oss.sonatype.org/service/local/repositories/releases/archive/co/fs2/fs2-core_2.12/0.9.4/fs2-core_2.12-0.9.4-javadoc.jar/!/fs2/util/Catenable.html). It has O(1) cons, snoc, and concat, amortized O(1) uncons, O(n) traversal, and negligible constant factors for small collections.
 
