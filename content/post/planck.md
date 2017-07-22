@@ -1,5 +1,5 @@
 +++
-date = "2017-07-20"
+date = "2017-07-22"
 title = "Building a Planck Keyboard"
 categories = [ "keyboards" ]
 +++
