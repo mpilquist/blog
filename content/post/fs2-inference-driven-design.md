@@ -172,7 +172,7 @@ one error found
 
 There are two standard ways to fix this. One way is to introduce type parameters for each covariant type:
 
-```scalac
+```scala
 trait Stream[+F[_], +A] {
   def ++[F2[x] >: F[x], A2 >: A](that: Stream[F2, A2]): Stream[F2, A2] = Stream.append(this, that)
 }
@@ -180,7 +180,7 @@ trait Stream[+F[_], +A] {
 
 Another approach is to define the infix method as an extension method, forgetting about variance in the process:
 
-```scalac
+```scala
 trait Stream[+F[_], +A]
 object Stream {
   implicit class InvariantOps[F[_], A](private val self: Stream[F, A]) extends AnyVal {
