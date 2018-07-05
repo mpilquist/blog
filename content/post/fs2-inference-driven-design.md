@@ -5,7 +5,6 @@ date: 2018-07-04T15:24:47-04:00
 slug: "fs2"
 categories: [ "articles" ]
 tags: [ "scala", "fp" ]
-draft: true
 ---
 
 Design is an exercise in balancing tradeoffs of various constraints. In this post, we'll look at a library design issue faced in [FS2](https://github.com/functional-streams-for-scala/fs2) and how constraints like Scala's type inference algorithm, minimization of explicit type annotations, and invariance under refactoring can be balanced.
