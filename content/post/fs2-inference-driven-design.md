@@ -110,7 +110,7 @@ Dotty complains:
 one error found
 ```
 
-Type inference happens on each statement independently, so `val x = Stream.emits(List(1))` is typed first, resulting in `Stream[Nothing, Int]`. We then tried to append a `Stream[Nothing, Int]` with `Stream.eval(IO(1))`. Dotty knew that meant `T₅` in `Stream.eval[T₅, T₆](IO[Int](1))` must be `Nothing` and so reported a type mismatch because `IO[Int]` is not `Nothing`.
+Type inference happens on each statement independently, so `val x = Stream.emits(List(1))` is typed first, resulting in `Stream[Nothing, Int]`. Dotty then types the `Stream.append` expression. In doing so, the `Stream.eval(IO(1))` subexpresion is expanded to `Stream.eval[T₅, T₆](IO[Int](1))` and `T₅` is assigned to `Nothing` due to `x: Stream[Nothing, Int]`. Dotty reports a type mismatch because the parameter to `eval` has type `IO[Int]` but is expected to have type `Nothing` due to `T₅ = Nothing`.
 
 If Scala supported the notion of polymorphic values, we could avoid this problem while keeping local type inference. Specifically, `x` could be typed as `[F[_]] Stream[F, Int]` instead of `Stream[Nothing, Int]`. Excuse the pseudo-syntax here -- what we're trying to express is that `x` is a `Stream[F, Int]` for all type constructors `F`. Scala 2 doesn't support polymorphic values though and it's [unlikely that Dotty will](https://github.com/lampepfl/dotty/pull/4672#issuecomment-398950818) (thanks to Guillaume Martres for the link).
 
