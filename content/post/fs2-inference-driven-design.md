@@ -141,7 +141,7 @@ By defining stream to be covariant with respect to both type parameters, both Sc
 ```scala
 val r = Stream.append(Stream.emits(List(1)), Stream.eval(IO(1)))
 
-val s = Stream.emit(1)
+val s = Stream.emits(List(1))
 val t = Stream.eval(IO(1))
 val u = Stream.append(s, t)
 
@@ -278,7 +278,7 @@ sealed trait Pure[A]
 trait Stream[+F[_], +A]
 
 object Stream {
-  def emits[A](as: List[A]): Stream[Nothing, A] = new Stream[Nothing, A] {}
+  def emits[A](as: List[A]): Stream[Pure, A] = new Stream[Pure, A] {}
   def eval[F[_], A](fa: F[A]): Stream[F, A] = new Stream[F, A] {}
   def append[F[_], A](x: Stream[F, A], y: Stream[F, A]): Stream[F, A] = new Stream[F, A] {}
 
@@ -292,13 +292,18 @@ object Stream {
 
   implicit class PureOps[A](private val self: Stream[Pure, A]) extends AnyVal {
     def ++[F[_]](that: Stream[F, A]): Stream[F, A] = Stream.append(self, that)
-    def through[B](p: Stream[Pure, A] => Stream[Pure, B]): Stream[Pure, B] = p(self)
-    def covary[F[x]]: Stream[F, A] = self.asInstanceOf[Stream[F, A]]
+    def covary[F[_]]: Stream[F, A] = self.asInstanceOf[Stream[F, A]]
   }
 }
 ```
 
-With this encoding, `Stream.emits(List(1)).through(identity)` works correctly.
+With this encoding, all of the following expressions work under 2.12.6 (and 2.11.12):
+
+```scala
+Stream.emits(List(1)) ++ Stream.eval(IO(1))
+Stream.eval(IO(1)) ++ Stream.emits(List(1))
+Stream.emits(List(1)).through(identity)
+```
 
 This encoding is pretty heavyweight. For every invariant operation, we have to define 2 overloads - one for an arbitrary `F` and one for `Pure`. Oddly, it's the only example so far for which Dotty fails -- though dotc crashes when compiling this example so that's likely just a bug. This encoding only exists to work around inference bugs in Scala 2.12 (and prior). While the encoding is heavyweight, it's boilerplate that FS2 authors have to deal with, resulting in much better type inference in user code.
 
