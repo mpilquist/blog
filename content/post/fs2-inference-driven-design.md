@@ -78,7 +78,7 @@ Stream.append[T₀, T₁](Stream.emits[T₂, Int](List[Int](1)), Stream.eval[IO,
 
 Using the definition of `append`, we can say that `T₁ = Int` because both parameters to `append` have type `Int` in the `A` position of `Stream`. Using a similar procedure for `T₀` results in the equalities `T₀ = T₂ = IO`. There are no further type parameters so we have successfully inferred and type checked this expression. Note how the type of the second parameter to `append` helped compute the unconstrained type parameter used in the first parameter to `append`.
 
-So where does scalac fail? I think it gets confused in its tracking of unresolved type parameters due to its dual use of `Nothing` -- the notion that a type parameter has been assigned to `Nothing` and the notion that a type parameter has not yet been determined. The confusion only occurs when the unsolved type parameter is a higher kinded type.
+So where does scalac fail? I think it gets confused in its tracking of unresolved type parameters due to its dual use of `Nothing` -- the notion that a type parameter is known to be `Nothing` and the notion that a type parameter has not yet been determined. The confusion only occurs when the undetermined type parameter is a higher kinded type.
 
 Dotty / Scala 3 does not use `Nothing` to represent an undetermined type parameter. Not conincidentally, this expression type checks fine in Dotty.
 
