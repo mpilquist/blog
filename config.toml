@@ -1,7 +1,7 @@
 languageCode = "en-us"
 title = "mpilquist"
 baseURL = "https://mpilquist.github.io/"
-copyright = "Copyright (c) 2012 - 2017 Michael Pilquist"
+copyright = "Copyright (c) 2012 - 2021 Michael Pilquist"
 
 [permalinks]
   post = "/blog/:year/:month/:day/:slug/"
@@ -16,3 +16,5 @@ copyright = "Copyright (c) 2012 - 2017 Michael Pilquist"
   twitter = "mpilquist"
   gaID = "UA-41236326-1"
 
+[markup.goldmark.renderer]
+  unsafe = true
