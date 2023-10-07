@@ -2,7 +2,7 @@
 	path = public
 	url = https://github.com/mpilquist/mpilquist.github.io
 	branch = master
-[submodule "themes/nofancy"]
+[submodule "nofancy"]
 	path = themes/nofancy
-	url = https://github.com/gizak/nofancy
+	url = https://github.com/mpilquist/hugo-theme-nofancy
 	branch = master
