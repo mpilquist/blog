@@ -1,7 +1,7 @@
 +++
 date = "2017-07-22"
 title = "Building a Planck Keyboard"
-categories = [ "keyboards" ]
+categories = [ "articles" ]
 +++
 
 I started programming on an 8MHz 80286 IBM AT (mostly BASICA/GW-BASIC). The AT was a beast of a machine, weighing 43 pounds, with a keyboard to match -- the Model F, a buckling spring style "clicky" keyboard. Given this start, it is unsurprising that I am still fond of a solidly built mechanical keyboard. I have tried a few throughout the years, settling on a [HHKB Pro 2](https://en.wikipedia.org/wiki/Happy_Hacking_Keyboard) for a while.
