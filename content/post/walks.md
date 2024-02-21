@@ -2,7 +2,7 @@
 date = "2024-02-20"
 title = "Optimizing Functional Walks of File Trees"
 slug = "fs2"
-categories = [ "talks" ]
+categories = [ "articles" ]
 tags = [ "scala", "fp" ]
 +++
 
